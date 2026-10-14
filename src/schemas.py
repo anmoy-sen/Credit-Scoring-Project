@@ -4,7 +4,7 @@ Defines input validation contracts with field constraints, output response model
 and rich OpenAPI schema examples for documentation.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -108,6 +108,16 @@ class CreditApplicantInput(BaseModel):
     )
 
 
+class FeatureImpact(BaseModel):
+    """Individual feature impact attribution."""
+
+    feature: str = Field(..., description="Pipeline transformed feature identifier.")
+    label: str = Field(..., description="Human-readable business label for the feature.")
+    value: Optional[Any] = Field(None, description="Applicant value on this feature (if available).")
+    shap_impact: float = Field(..., description="Local SHAP value contribution towards default risk.")
+    direction: str = Field(..., description="Direction of risk: INCREASES_RISK or DECREASES_RISK.")
+
+
 class CreditScoreResponse(BaseModel):
     """Credit scoring prediction response."""
 
@@ -116,6 +126,34 @@ class CreditScoreResponse(BaseModel):
     risk_tier: str = Field(..., description="Categorical risk tier (Low Risk, Moderate Risk, High Risk).")
     decision: str = Field(..., description="Underwriting decision: APPROVE or DECLINE.")
     threshold_used: float = Field(..., description="Decision threshold applied to default probability.")
+    adverse_factors: Optional[List[FeatureImpact]] = Field(
+        None,
+        description="Top factors increasing default risk (Adverse Action Reasons)."
+    )
+    protective_factors: Optional[List[FeatureImpact]] = Field(
+        None,
+        description="Top factors decreasing default risk (Positive Drivers)."
+    )
+
+
+class AdverseActionNotice(BaseModel):
+    """Regulatory adverse action disclosure notice (FCRA / ECOA compliant)."""
+
+    decision: str
+    credit_score: int
+    probability_of_default: float
+    primary_adverse_reasons: List[FeatureImpact] = Field(
+        ...,
+        description="Key factors that contributed negatively to the applicant credit evaluation."
+    )
+    positive_factors: List[FeatureImpact] = Field(
+        ...,
+        description="Key positive factors supporting the applicant evaluation."
+    )
+    regulatory_statement: str = (
+        "Pursuant to the Equal Credit Opportunity Act and Fair Credit Reporting Act, "
+        "the principal reasons contributing to this credit evaluation are disclosed above."
+    )
 
 
 class BatchApplicantsInput(BaseModel):

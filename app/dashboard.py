@@ -41,6 +41,20 @@ def get_cached_pipeline():
 
 pipeline = get_cached_pipeline()
 
+@st.cache_resource
+def get_cached_explainer():
+    p = get_cached_pipeline()
+    if p is not None:
+        try:
+            from src.explainability import CreditExplainer
+            return CreditExplainer(p)
+        except Exception as e:
+            st.error(f"Failed to load explainer: {e}")
+            return None
+    return None
+
+explainer = get_cached_explainer()
+
 # Preset profiles for rapid testing
 PRESETS = {
     "Custom Input": None,
@@ -242,6 +256,53 @@ if app_mode == "Single Applicant Scoring":
         kcol1.metric("Credit Utilization", f"{utilization:.1f}%")
         kcol2.metric("Delinquent Months", f"{late_count} of 6")
         kcol3.metric("Avg Monthly Payment", f"NT$ {avg_payment:,.0f}")
+
+        # 3. Explainability & Regulatory Adverse Action (TreeSHAP)
+        st.markdown("---")
+        st.subheader("3. Explainability & Regulatory Adverse Action Analysis")
+
+        if explainer is not None:
+            with st.spinner("Computing TreeSHAP local feature attributions..."):
+                explanation = explainer.explain_applicant(raw_payload, top_k=4)
+
+            adverse = explanation.get("adverse_factors", [])
+            protective = explanation.get("protective_factors", [])
+
+            exp_col1, exp_col2 = st.columns(2)
+
+            with exp_col1:
+                st.markdown("#### ⚠️ Primary Adverse Factors (Risk Drivers)")
+                st.caption("FCRA & ECOA compliance: Key reasons contributing negatively to credit risk.")
+                if adverse:
+                    for f in adverse:
+                        st.error(f"**{f['label']}**  \nImpact: `+{f['shap_impact']:.4f}` default contribution")
+                else:
+                    st.info("No significant negative risk factors identified.")
+
+            with exp_col2:
+                st.markdown("#### 🟢 Positive Factors (Credit Builders)")
+                st.caption("Key mitigating factors that improved the credit evaluation.")
+                if protective:
+                    for f in protective:
+                        st.success(f"**{f['label']}**  \nImpact: `{f['shap_impact']:.4f}` risk reduction")
+                else:
+                    st.info("No significant protective factors identified.")
+
+            # Waterfall / Attribution Bar Chart
+            st.markdown("#### Decision Attribution Force Plot")
+            top_attrs = explanation.get("all_attributions", [])[:10]
+            if top_attrs:
+                fig, ax = plt.subplots(figsize=(8, 4))
+                plot_labels = [a["label"] for a in reversed(top_attrs)]
+                plot_impacts = [a["shap_impact"] for a in reversed(top_attrs)]
+                plot_colors = ["#d62728" if x > 0 else "#2ca02c" for x in plot_impacts]
+                ax.barh(plot_labels, plot_impacts, color=plot_colors, alpha=0.85)
+                ax.axvline(0, color="black", linestyle="--", linewidth=0.8)
+                ax.set_xlabel("SHAP Impact on Default Risk (Red = Increases Risk, Green = Reduces Risk)")
+                ax.set_title("Top 10 Feature Attributions for this Applicant")
+                st.pyplot(fig)
+        else:
+            st.info("SHAP Explainer is not initialized. Ensure shap is installed.")
 
 # --- MODE 2: BATCH PORTFOLIO SCORING ---
 else:

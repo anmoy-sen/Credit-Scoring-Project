@@ -22,7 +22,9 @@ from src.schemas import (
     CreditScoreResponse,
     BatchApplicantsInput,
     BatchCreditScoreResponse,
-    HealthCheckResponse
+    HealthCheckResponse,
+    FeatureImpact,
+    AdverseActionNotice
 )
 from src.predict import (
     load_pipeline,
@@ -30,6 +32,7 @@ from src.predict import (
     score_batch,
     CHAMPION_PIPELINE_PATH
 )
+from src.explainability import CreditExplainer
 
 API_VERSION = "1.0.0"
 
@@ -47,13 +50,29 @@ def get_pipeline():
     return pipeline
 
 
+def get_explainer():
+    """Retrieves cached CreditExplainer or initializes on demand."""
+    explainer = getattr(app.state, "explainer", None)
+    if explainer is None:
+        pipeline = get_pipeline()
+        if pipeline is not None:
+            try:
+                explainer = CreditExplainer(pipeline)
+                app.state.explainer = explainer
+            except Exception as exc:
+                print(f"[EXPLAINER WARNING] Failed to initialize explainer: {exc}")
+                return None
+    return explainer
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Loads model pipeline at startup and manages service lifecycle."""
+    """Loads model pipeline and explainer at startup."""
     print(f"[STARTUP] Initializing Credit Scoring API v{API_VERSION}...")
     pipeline = get_pipeline()
     if pipeline is not None:
         print(f"[STARTUP] Successfully loaded champion pipeline from {CHAMPION_PIPELINE_PATH}")
+        get_explainer()
     else:
         print(f"[STARTUP WARNING] Champion pipeline could not be loaded on startup.")
     yield
@@ -126,6 +145,10 @@ async def predict_single(
         ge=0.01,
         le=0.99,
         description="Decision threshold for classifying default risk (default: 0.50)."
+    ),
+    explain: bool = Query(
+        False,
+        description="Include top adverse and protective factors (TreeSHAP)."
     )
 ):
     """Evaluates a single credit applicant payload and produces risk score and decision."""
@@ -139,11 +162,62 @@ async def predict_single(
     try:
         raw_dict = applicant.model_dump()
         result = score_applicant(raw_dict, pipeline=pipeline, threshold=threshold)
+
+        if explain:
+            explainer = get_explainer()
+            if explainer is not None:
+                exp = explainer.explain_applicant(raw_dict, top_k=4)
+                result["adverse_factors"] = exp["adverse_factors"]
+                result["protective_factors"] = exp["protective_factors"]
+
         return CreditScoreResponse(**result)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Inference execution failed: {str(exc)}"
+        )
+
+
+@app.post(
+    "/explain",
+    response_model=AdverseActionNotice,
+    tags=["Governance & Compliance"],
+    summary="Generate adverse action explanation notice (FCRA / ECOA compliant)"
+)
+async def explain_applicant_decision(
+    applicant: CreditApplicantInput,
+    threshold: float = Query(
+        0.50,
+        ge=0.01,
+        le=0.99,
+        description="Decision threshold."
+    )
+):
+    """Generates regulatory adverse action disclosure for credit applicants using TreeSHAP."""
+    pipeline = get_pipeline()
+    explainer = get_explainer()
+    if pipeline is None or explainer is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Model or explainer service is unavailable."
+        )
+
+    try:
+        raw_dict = applicant.model_dump()
+        score_res = score_applicant(raw_dict, pipeline=pipeline, threshold=threshold)
+        exp = explainer.explain_applicant(raw_dict, top_k=4)
+
+        return AdverseActionNotice(
+            decision=score_res["decision"],
+            credit_score=score_res["credit_score"],
+            probability_of_default=score_res["probability_of_default"],
+            primary_adverse_reasons=[FeatureImpact(**f) for f in exp["adverse_factors"]],
+            positive_factors=[FeatureImpact(**f) for f in exp["protective_factors"]]
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Adverse action explanation failed: {str(exc)}"
         )
 
 
