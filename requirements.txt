@@ -20,4 +20,9 @@ seaborn>=0.13.0
 fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.8.0
+python-multipart>=0.0.18
 streamlit>=1.38.0
+
+# Testing & Client Tools
+pytest>=8.0.0
+httpx>=0.27.0
