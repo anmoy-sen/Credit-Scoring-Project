@@ -1,0 +1,91 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: py -3 -m src.train
+    deps:
+    - path: data/raw/credit.csv
+      hash: md5
+      md5: 53dd308e28ef1d309a83a3993c50f41a
+      size: 2758125
+    - path: src/evaluation.py
+      hash: md5
+      md5: 715c2e81c57d7d98daa7fdd5faa44eca
+      size: 5672
+    - path: src/features.py
+      hash: md5
+      md5: 870da34d7ba3be93fa15356824ae0d7f
+      size: 4026
+    - path: src/models.py
+      hash: md5
+      md5: 331dad7e3de78bcc7f4ff91b1cc2523c
+      size: 2975
+    - path: src/pipeline.py
+      hash: md5
+      md5: fae2720a0ee1ed97dcbeba00351de25c
+      size: 2007
+    - path: src/train.py
+      hash: md5
+      md5: 243a5abb58830b7a3cada4f4e90f5c0f
+      size: 6161
+    params:
+      params.yaml:
+        data:
+          raw_path: data/raw/credit.csv
+          test_size: 0.2
+          random_state: 42
+          stratify: true
+        hyperparameters:
+          random_forest:
+            n_estimators: 100
+            max_depth: 8
+            min_samples_split: 20
+            min_samples_leaf: 10
+            class_weight: balanced
+            random_state: 42
+            n_jobs: -1
+          xgboost:
+            n_estimators: 150
+            max_depth: 6
+            learning_rate: 0.05
+            scale_pos_weight: 3.5
+            eval_metric: logloss
+            random_state: 42
+            n_jobs: -1
+          lightgbm:
+            n_estimators: 150
+            max_depth: 6
+            learning_rate: 0.05
+            class_weight: balanced
+            random_state: 42
+            verbose: -1
+            n_jobs: -1
+          catboost:
+            iterations: 300
+            depth: 6
+            learning_rate: 0.05
+            auto_class_weights: Balanced
+            random_state: 42
+            verbose: 0
+        model:
+          default_threshold: 0.5
+          cost_fp: 1.0
+          cost_fn: 5.0
+          score_base: 600
+          score_pdo: 40
+    outs:
+    - path: models/champion_pipeline.pkl
+      hash: md5
+      md5: 19cdba776219e9512a7b5faf5def7ee4
+      size: 2369163
+    - path: reports/metrics.json
+      hash: md5
+      md5: 24cff41cb828aed0a4f303ae31e70893
+      size: 2317
+    - path: reports/model_comparison.csv
+      hash: md5
+      md5: 46ea4226b0ba2bf15a46b46a5b86244e
+      size: 914
+    - path: reports/plots/roc_curves.png
+      hash: md5
+      md5: a9d2a2a0fc5c258399388bbf68a14402
+      size: 218893

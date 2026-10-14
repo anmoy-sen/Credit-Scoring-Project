@@ -1,0 +1,5 @@
+outs:
+- md5: 53dd308e28ef1d309a83a3993c50f41a
+  size: 2758125
+  hash: md5
+  path: credit.csv

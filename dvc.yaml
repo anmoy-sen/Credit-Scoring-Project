@@ -1,0 +1,23 @@
+stages:
+  train:
+    cmd: py -3 -m src.train
+    deps:
+      - data/raw/credit.csv
+      - src/features.py
+      - src/pipeline.py
+      - src/models.py
+      - src/evaluation.py
+      - src/train.py
+    params:
+      - data
+      - model
+      - hyperparameters
+    outs:
+      - models/champion_pipeline.pkl
+      - reports/model_comparison.csv
+    metrics:
+      - reports/metrics.json:
+          cache: false
+    plots:
+      - reports/plots/roc_curves.png:
+          cache: false

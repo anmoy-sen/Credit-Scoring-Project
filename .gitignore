@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Processed data
+data/processed/
+
+# DVC local cache and temp
+.dvc/cache
+.dvc/tmp
+
+# Large model artifacts (tracked via DVC)
+models/*.pkl
+
+# Logs and OS files
+*.log
+catboost_info/
+.DS_Store
+Thumbs.db

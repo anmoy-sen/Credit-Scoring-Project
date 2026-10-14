@@ -1,0 +1,70 @@
+{
+  "champion": {
+    "name": "Random Forest",
+    "Accuracy": 0.7812760633861552,
+    "Precision": 0.5042340261739799,
+    "Recall": 0.6179245283018868,
+    "F1-Score": 0.5553200508690123,
+    "Financial_Cost": 2669.0,
+    "ROC-AUC": 0.7909814249929296,
+    "PR-AUC": 0.5711893387837254,
+    "Brier_Score": 0.17231123358640965,
+    "Optimal_Threshold": 0.38999999999999996,
+    "Optimal_Cost": 2550.0,
+    "Optimal_Recall": 0.7377358490566037
+  },
+  "all_models": {
+    "Random Forest": {
+      "Accuracy": 0.7812760633861552,
+      "Precision": 0.5042340261739799,
+      "Recall": 0.6179245283018868,
+      "F1-Score": 0.5553200508690123,
+      "Financial_Cost": 2669.0,
+      "ROC-AUC": 0.7909814249929296,
+      "PR-AUC": 0.5711893387837254,
+      "Brier_Score": 0.17231123358640965,
+      "Optimal_Threshold": 0.38999999999999996,
+      "Optimal_Cost": 2550.0,
+      "Optimal_Recall": 0.7377358490566037
+    },
+    "XGBoost": {
+      "Accuracy": 0.7731442869057548,
+      "Precision": 0.4896142433234421,
+      "Recall": 0.6226415094339622,
+      "F1-Score": 0.5481727574750831,
+      "Financial_Cost": 2688.0,
+      "ROC-AUC": 0.7836487667164964,
+      "PR-AUC": 0.558806985768649,
+      "Brier_Score": 0.17171534561432744,
+      "Optimal_Threshold": 0.37999999999999995,
+      "Optimal_Cost": 2557.0,
+      "Optimal_Recall": 0.7726415094339623
+    },
+    "LightGBM": {
+      "Accuracy": 0.7687656380316931,
+      "Precision": 0.4820775420629115,
+      "Recall": 0.6216981132075472,
+      "F1-Score": 0.5430572723526988,
+      "Financial_Cost": 2713.0,
+      "ROC-AUC": 0.7842881348228354,
+      "PR-AUC": 0.5625308647982326,
+      "Brier_Score": 0.17402215178372846,
+      "Optimal_Threshold": 0.36999999999999994,
+      "Optimal_Cost": 2576.0,
+      "Optimal_Recall": 0.7867924528301887
+    },
+    "CatBoost": {
+      "Accuracy": 0.767931609674729,
+      "Precision": 0.4809489575844716,
+      "Recall": 0.6311320754716981,
+      "F1-Score": 0.5458996328029376,
+      "Financial_Cost": 2677.0,
+      "ROC-AUC": 0.7893794695163833,
+      "PR-AUC": 0.5712813258488495,
+      "Brier_Score": 0.17405321689387787,
+      "Optimal_Threshold": 0.3999999999999999,
+      "Optimal_Cost": 2497.0,
+      "Optimal_Recall": 0.7575471698113208
+    }
+  }
+}
