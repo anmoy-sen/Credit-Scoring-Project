@@ -20,8 +20,9 @@ data/processed/
 .dvc/cache
 .dvc/tmp
 
-# Large model artifacts (tracked via DVC)
+# Large model artifacts (tracked via DVC, except production champion for deployment)
 models/*.pkl
+!models/champion_pipeline.pkl
 
 # Logs and OS files
 *.log

@@ -16,12 +16,21 @@ import pandas as pd
 
 from src.evaluation import probability_to_credit_score
 
-CHAMPION_PIPELINE_PATH = Path("models/champion_pipeline.pkl")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_PIPELINE_PATH = PROJECT_ROOT / "models" / "champion_pipeline.pkl"
+CHAMPION_PIPELINE_PATH = DEFAULT_PIPELINE_PATH
 
 
-def load_pipeline(path: Union[str, Path] = CHAMPION_PIPELINE_PATH):
+def load_pipeline(path: Union[str, Path, None] = None):
     """Loads the fitted end-to-end pipeline."""
-    p = Path(path)
+    if path is not None:
+        p = Path(path)
+    else:
+        # Check current working directory first, then project root
+        p = Path("models/champion_pipeline.pkl")
+        if not p.exists():
+            p = DEFAULT_PIPELINE_PATH
+
     if not p.exists():
         raise FileNotFoundError(f"Champion pipeline not found at: {p.resolve()}. Please train first.")
     return joblib.load(p)
